@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #f4f4f4;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .incident-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .incident-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .incident-type {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .incident-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-open {
+            background: #ffeaa7;
+            color: #e17055;
+        }
+
+        .status-closed {
+            background: #55efc4;
+            color: #00b894;
+        }
+
+        .incident-dates {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .incident-description {
+            margin-bottom: 0.5rem;
+        }
+
+        .incident-remarks {
+            font-style: italic;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Incident Management System</h1>
+            <p>Track and manage incidents with MongoDB backend</p>
+        </header>
+
+        <div class="alert" id="alert"></div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>Create New Incident</h2>
+                <form id="incidentForm">
+                    <div class="form-group">
+                        <label for="type">Incident Type *</label>
+                        <input type="text" id="type" name="type" required placeholder="e.g., Network Outage, Security Breach">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incidentStartDate">Start Date *</label>
+                        <input type="datetime-local" id="incidentStartDate" name="incidentStartDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incidentEndDate">End Date</label>
+                        <input type="datetime-local" id="incidentEndDate" name="incidentEndDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description *</label>
+                        <textarea id="description" name="description" required placeholder="Detailed description of the incident"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="remarks">Remarks</label>
+                        <textarea id="remarks" name="remarks" placeholder="Additional remarks or notes"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="open">Open</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+
+                    <button type="submit">Create Incident</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Recent Incidents</h2>
+                <div class="incident-list" id="incidentList">
+                    <div class="loading">Loading incidents...</div>
+                </div>
+                <button onclick="loadIncidents()" style="margin-top: 1rem; width: 100%;">Refresh List</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        // DOM elements
+        const alertDiv = document.getElementById('alert');
+        const incidentForm = document.getElementById('incidentForm');
+        const incidentList = document.getElementById('incidentList');
+
+        // Show alert message
+        function showAlert(message, type = 'success') {
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        // Load incidents from API
+        async function loadIncidents() {
+            try {
+                incidentList.innerHTML = '<div class="loading">Loading incidents...</div>';
+                
+                const response = await fetch(`${API_BASE}/incidents`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.data.length === 0) {
+                        incidentList.innerHTML = '<div class="loading">No incidents found. Create one above!</div>';
+                        return;
+                    }
+                    
+                    incidentList.innerHTML = result.data.map(incident => `
+                        <div class="incident-item">
+                            <div class="incident-header">
+                                <span class="incident-type">${incident.type}</span>
+                                <span class="incident-status status-${incident.status}">${incident.status.toUpperCase()}</span>
+                            </div>
+                            <div class="incident-dates">
+                                <strong>Start:</strong> ${formatDate(incident.incidentStartDate)}
+                                ${incident.incidentEndDate ? `<br><strong>End:</strong> ${formatDate(incident.incidentEndDate)}` : ''}
+                                ${incident.durationInDays ? `<br><strong>Duration:</strong> ${incident.durationInDays} days` : ''}
+                            </div>
+                            <div class="incident-description">${incident.description}</div>
+                            ${incident.remarks ? `<div class="incident-remarks"><strong>Remarks:</strong> ${incident.remarks}</div>` : ''}
+                            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #999;">
+                                Created: ${formatDate(incident.createdAt)}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Error loading incidents:', error);
+                incidentList.innerHTML = '<div class="loading" style="color: #e74c3c;">Error loading incidents. Make sure the server is running.</div>';
+            }
+        }
+
+        // Handle form submission
+        incidentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(incidentForm);
+            const incidentData = {
+                type: formData.get('type'),
+                incidentStartDate: new Date(formData.get('incidentStartDate')).toISOString(),
+                description: formData.get('description'),
+                remarks: formData.get('remarks'),
+                status: formData.get('status')
+            };
+
+            // Add end date if provided
+            const endDate = formData.get('incidentEndDate');
+            if (endDate) {
+                incidentData.incidentEndDate = new Date(endDate).toISOString();
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/incidents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(incidentData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Incident created successfully!');
+                    incidentForm.reset();
+                    loadIncidents();
+                } else {
+                    throw new Error(result.message || 'Failed to create incident');
+                }
+            } catch (error) {
+                console.error('Error creating incident:', error);
+                showAlert(`Error: ${error.message}`, 'error');
+            }
+        });
+
+        // Set default start date to current time
+        document.getElementById('incidentStartDate').value = new Date().toISOString().slice(0, 16);
+
+        // Load incidents when page loads
+        document.addEventListener('DOMContentLoaded', loadIncidents);
+    </script>
+</body>
+</html>
